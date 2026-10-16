@@ -1,0 +1,31 @@
+:root { --bg:#f6f4ef; --ink:#1f2937; --muted:#6b7280; --card:#fff; --border:#e5e1d8; --signal:#f97316; font-family: system-ui, sans-serif; color: var(--ink); background: var(--bg); }
+* { box-sizing: border-box; }
+body { margin: 0; }
+a { color: inherit; }
+.container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+.nav { display:flex; gap:16px; align-items:center; padding:12px 24px; background:var(--ink); color:#fff; border-bottom:4px solid var(--signal); }
+.nav a { color:#d1d5db; text-decoration:none; }
+.nav a.active { color: var(--signal); }
+.brand { font-family: monospace; }
+.spacer { flex: 1; }
+.panel { background:var(--card); border:1px solid var(--border); border-radius:4px; padding:16px; margin:12px 0; }
+.narrow { max-width: 460px; margin: 40px auto; display:flex; flex-direction:column; gap:10px; }
+input, select, textarea, button { font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 4px; background:#fff; }
+textarea { width: 100%; }
+button { cursor:pointer; }
+.primary, .button.primary { background:var(--ink); color:#fff; border-color:var(--ink); text-decoration:none; padding:8px 14px; border-radius:4px; }
+.link { border:none; background:none; color:var(--muted); text-decoration:underline; }
+.filters { display:flex; flex-wrap:wrap; gap:8px; }
+.row { display:flex; gap:8px; align-items:center; }
+.between { justify-content:space-between; }
+.wrap { flex-wrap:wrap; }
+.card { display:block; text-decoration:none; }
+.card:hover { border-color: var(--signal); }
+.card h3 { margin: 8px 0 4px; }
+.badge { font: 600 11px monospace; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; background:#eee; }
+.status-open { background:#dbeafe; } .status-in_progress { background:#fef3c7; } .status-resolved { background:#d1fae5; } .status-closed { background:#e5e7eb; }
+.prio-high { background:var(--signal); color:#fff; } .prio-medium { background:#ffedd5; } .prio-low { background:#f3f4f6; }
+.muted { color: var(--muted); } .small { font-size: 13px; } .error { color:#dc2626; } .pre { white-space: pre-wrap; }
+.stats { display:grid; grid-template-columns: repeat(4,1fr); gap:12px; }
+.big { font: 700 28px monospace; }
+.charts { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
