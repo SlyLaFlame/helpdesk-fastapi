@@ -2,7 +2,7 @@
 
 > Modeled after the ticket workflow I manage daily at KIHBT's ICT department (password resets, printer, desktop, and WiFi issues for students and staff).
 
-**Stack:** FastAPI · SQLAlchemy 2 · SQLite (swap to PostgreSQL via `DATABASE_URL`) · JWT auth · React 18 + Vite · Recharts
+**Stack:** FastAPI · SQLAlchemy 2 · PostgreSQL (SQLite fallback for quick local demos) · JWT auth · React 18 + Vite · Recharts
 
 ## Features
 1. **CRUD**: create, list and view tickets, plus comments.
@@ -13,14 +13,27 @@
 
 ## Run it
 
-```bash
-# Backend
+### Database (PostgreSQL)
+
+Install PostgreSQL 16 (or run `docker compose up -d db`) and create the database:
+
+```sql
+CREATE USER helpdesk WITH PASSWORD 'change-me';
+CREATE DATABASE helpdesk OWNER helpdesk;
+```
+
+### Backend
+
+```
 cd backend
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env            # set SECRET_KEY
-python seed.py                  # optional demo data (admin@example.com / password123)
+cp .env.example .env            # set SECRET_KEY and DATABASE_URL
+python seed.py                  # optional demo data
 uvicorn app.main:app --reload   # API docs at http://localhost:8000/docs
+```
+
+Tables are created automatically on first start. Leave `DATABASE_URL` unset to use a local SQLite file instead.
 
 # Frontend (new terminal)
 cd frontend
