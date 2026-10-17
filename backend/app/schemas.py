@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from .models import Category, Priority, Role, Status
 
@@ -13,9 +13,18 @@ class ORM(BaseModel):
 class UserCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     email: EmailStr
-    password: str = Field(min_length=6)
+    password: str = Field(min_length=10, max_length=128)
     department: str = ""
     role: Role = Role.student  # only student/staff honoured on self-registration
+
+    @field_validator("password")
+    @classmethod
+    def password_fits_bcrypt(cls, v: str) -> str:
+        # bcrypt only uses the first 72 bytes and newer versions raise an
+        # error beyond that, which would otherwise surface as a 500.
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password must be at most 72 bytes")
+        return v
 
 
 class UserOut(ORM):

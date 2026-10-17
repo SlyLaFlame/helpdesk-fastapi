@@ -2,6 +2,7 @@ from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from . import models, schemas
@@ -23,21 +24,24 @@ def get_user_by_email(db: Session, email: str) -> User | None:
 
 
 def create_user(db: Session, data: schemas.UserCreate, force_role: models.Role | None = None) -> User:
-    if get_user_by_email(db, data.email):
-        raise HTTPException(400, "Email already registered")
-    is_first = db.scalar(select(func.count(User.id))) == 0
+    # Public registration can only ever produce student/staff accounts.
+    # Admin and IT-agent accounts are created by trusted code via force_role
+    # (create_admin.py, seed.py) or by an admin through the users router.
     if force_role:
         role = force_role
-    elif is_first:
-        role = models.Role.admin
     elif data.role in (models.Role.student, models.Role.staff):
         role = data.role
     else:
         role = models.Role.student
+
     user = User(name=data.name, email=data.email.lower(), department=data.department,
                 hashed_password=hash_password(data.password), role=role)
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(400, "Email already registered")
     db.refresh(user)
     return user
 
@@ -138,31 +142,3 @@ def update_ticket(db: Session, ticket: Ticket, data: schemas.TicketUpdate, actor
         _log(db, ticket, actor, f"Assigned to {agent.name}")
 
     db.commit()
-    db.expire_all()
-    return get_ticket(db, ticket.id, actor)
-
-
-def add_comment(db: Session, ticket: Ticket, user: User, text: str) -> TicketComment:
-    c = TicketComment(ticket_id=ticket.id, user_id=user.id, comment=text)
-    db.add(c)
-    db.commit()
-    db.refresh(c)
-    return c
-
-
-# ---------- Analytics ----------
-def analytics(db: Session) -> schemas.Analytics:
-    total = db.scalar(select(func.count(Ticket.id))) or 0
-    by_status = dict(db.execute(select(Ticket.status, func.count()).group_by(Ticket.status)).all())
-    by_cat = dict(db.execute(select(Ticket.category, func.count()).group_by(Ticket.category)).all())
-    resolved = db.execute(select(Ticket.created_at, Ticket.resolved_at).where(Ticket.resolved_at.is_not(None))).all()
-    avg = (sum((r - c).total_seconds() for c, r in resolved) / len(resolved) / 3600) if resolved else None
-    open_count = by_status.get(Status.open, 0) + by_status.get(Status.in_progress, 0)
-    return schemas.Analytics(
-        total=total,
-        open_count=open_count,
-        closed_count=total - open_count,
-        avg_resolution_hours=round(avg, 2) if avg is not None else None,
-        by_category=[schemas.CountItem(label=c.value, count=by_cat.get(c, 0)) for c in Category],
-        by_status=[schemas.CountItem(label=s.value, count=by_status.get(s, 0)) for s in Status],
-    )
